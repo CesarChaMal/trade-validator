@@ -16,7 +16,7 @@ import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
+import org.jminix.console.servlet.MiniConsoleServlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import java.text.ParseException;
@@ -36,6 +36,7 @@ public class TradeValidatorAppApplication implements ServletContextInitializer {
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
 		servletContext.addServlet("ViewStatusMessages", ViewStatusMessagesServlet.class).addMapping("/logs");
+        servletContext.addServlet("JmxMiniConsoleServlet", MiniConsoleServlet.class).addMapping("/jmx/*");
 	}
 
 	@Bean

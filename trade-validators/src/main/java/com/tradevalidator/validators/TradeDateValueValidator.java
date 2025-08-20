@@ -6,7 +6,6 @@ import com.tradevalidator.model.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
 import static com.tradevalidator.model.ValidationResult.validationResult;
 import static com.tradevalidator.model.ValidationError.validationError;
 
