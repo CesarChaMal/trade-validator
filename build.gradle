@@ -1,10 +1,12 @@
+apply plugin: 'maven'
+
 project.ext.springVersion = "4.3.3.RELEASE"
 subprojects {
 
     group = 'com.tradevalidator'
     version = '1.0.0-SNAPSHOT'
 
-    apply plugin: 'maven'
+    apply plugin: 'eclipse'
     apply plugin: 'java'
     apply plugin: 'idea'
 
@@ -12,11 +14,14 @@ subprojects {
     repositories {
         mavenCentral()
         mavenLocal()
+        maven {
+            url "https://maven.restlet.talend.com"
+        }
     }
 
     dependencies {
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.hamcrest:hamcrest-all:1.3'
-        testCompile 'org.mockito:mockito-all:1.10.19'
+        testImplementation 'junit:junit:4.12'
+        testImplementation 'org.hamcrest:hamcrest-all:1.3'
+        testImplementation 'org.mockito:mockito-all:1.10.19'
     }
 }

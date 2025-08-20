@@ -1,157 +1,159 @@
-Trade validation service
-========================
+# Trade Validation Service
 
-Service which checks trade details 
+A microservice that validates trade details using configurable business rules.
 
-Service is based on Gradle, Spring 4.3.3 and Spring Boot 1.4.1
+## Technology Stack
+- **Build Tool**: Gradle
+- **Framework**: Spring 4.3.3 with Spring Boot 1.4.1
+- **Architecture**: Modular design with separated concerns
 
-Service built from modules which implement separated functionality.
- 
- - trade-validator-model : model classes for trade, validation errors 
-  
- - trade-validator-api : API interfaces to add new things into validation service
- 
- - trade-validator-core : core services for trade validation
-  
- - trade-validator-app : REST interface for validating trades
- 
- - trade-validators : implementation of trade validation business rules
+## Module Structure
 
+| Module | Description |
+|--------|-------------|
+| `trade-validator-model` | Model classes for trades and validation errors |
+| `trade-validator-api` | API interfaces for extending validation functionality |
+| `trade-validator-core` | Core validation services and orchestration |
+| `trade-validator-app` | REST API endpoints for trade validation |
+| `trade-validators` | Business rule implementations |
 
-Each validation rule should implement `TradeValidator` interface and be a spring managed bean, during startup Spring will inject available validators into `ValidationCore`.
-REST API controllers calls `ValidationCore` for validate trodes and return results.
+## Architecture Overview
 
-Validators from `trade-validators` have pre-defined, hardcoded  settings, can load configurations from spring configurations and also expose JMX managed beans which allow settings change on runtime. 
-
-
-
-API endpoints
-=============
-
-`/api/validate` - validate single trade, as result is returned trade and list of invalid fields
-
-`/api/validateBulk` - bulk validate of a trade list, as result is returned list of trades and each trade have list of errors
-
-`/api/shutdown` - shutdown endpoint, `GET` request to fetch status, `POST` to shutdown service. Shutdown can be canceled by sending `DELETE` on shutdown API.
-Shutdown status is also available through default `/info` endpoint. When shutdown status is set, service no more accept trades for validation.
-
-`/metrics` - fetch  application metrics 
-
-`/swagger-ui.html#/validation-controller` - swagger Rest API documentation
+- **Validation Rules**: Each rule implements the `TradeValidator` interface as a Spring-managed bean
+- **Dependency Injection**: Spring automatically injects available validators into `ValidationCore` at startup
+- **Request Flow**: REST controllers → `ValidationCore` → Individual validators → Response
+- **Configuration**: Validators support hardcoded defaults, Spring configuration, and runtime JMX management 
 
 
 
-Example API calls
-=================
+## API Endpoints
 
-**Validate single trade**
+### Validation Endpoints
+- **`POST /api/validate`** - Validate a single trade
+  - Returns: Trade object with validation errors (if any)
+- **`POST /api/validateBulk`** - Validate multiple trades
+  - Returns: Array of trades, each with their validation errors
 
-Request
+### Management Endpoints
+- **`GET /api/shutdown`** - Check shutdown status
+- **`POST /api/shutdown`** - Initiate graceful shutdown
+- **`DELETE /api/shutdown`** - Cancel pending shutdown
+- **`GET /info`** - Service information including shutdown status
+- **`GET /metrics`** - Application metrics
 
-`curl -v   -H "Content-Type: application/json"   -X POST --data "@./raw_trades/single_trade.json" localhost:8080/api/validate`
+### Documentation
+- **`/swagger-ui.html#/validation-controller`** - Interactive API documentation
 
-Response
+> **Note**: When shutdown is initiated, the service stops accepting new validation requests.
 
-```
-* Hostname was NOT found in DNS cache
-*   Trying 127.0.0.1...
-* Connected to localhost (127.0.0.1) port 8080 (#0)
-> POST /api/validate HTTP/1.1
-> User-Agent: curl/7.35.0
-> Host: localhost:8080
-> Accept: */*
-> Content-Type: application/json
-> Content-Length: 232
-> 
-* upload completely sent off: 232 out of 232 bytes
-< HTTP/1.1 200 
-< X-Application-Context: application
-< Content-Type: application/json;charset=UTF-8
-< Transfer-Encoding: chunked
-< Date: Sun, 09 Oct 2016 09:40:17 GMT
-< 
-* Connection #0 to host localhost left intact
-{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-15","customer":"PLUTO1","ccyPair":"EURUSD","type":"Spot","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On spot trades valueDate should be +2 days from today date"]},"haveErrors":true}
-```
-**Bulk trades validation**
 
-Request 
 
-`curl -v   -H "Content-Type: application/json"   -X POST --data "@./raw_trades/bulk_trades.json" localhost:8080/api/validateBulk`
+## Usage Examples
 
-Response
+### Single Trade Validation
 
-```
-curl -v   -H "Content-Type: application/json"   -X POST --data "@./raw_trades/bulk_trades.json" localhost:8080/api/validateBulk
-* Hostname was NOT found in DNS cache
-*   Trying 127.0.0.1...
-* Connected to localhost (127.0.0.1) port 8080 (#0)
-> POST /api/validateBulk HTTP/1.1
-> User-Agent: curl/7.35.0
-> Host: localhost:8080
-> Accept: */*
-> Content-Type: application/json
-> Content-Length: 5089
-> Expect: 100-continue
-> 
-< HTTP/1.1 100 Continue
-< HTTP/1.1 200 
-< X-Application-Context: application
-< Content-Type: application/json;charset=UTF-8
-< Transfer-Encoding: chunked
-< Date: Sun, 09 Oct 2016 09:43:29 GMT
-< 
-[{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-15","customer":"PLUTO1","ccyPair":"EURUSD","type":"Spot","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On spot trades valueDate should be +2 days from today date"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-22","customer":"PLUTO1","ccyPair":"EURUSD","type":"Spot","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On spot trades valueDate should be +2 days from today date"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-22","customer":"PLUTO2","ccyPair":"EURUSD","type":"Forward","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On forward trades valueDate should be more than 2 days"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-21","customer":"PLUTO2","ccyPair":"EURUSD","type":"Forward","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On forward trades valueDate should be more than 2 days","valueDate is holiday date"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-08","customer":"PLUTO2","ccyPair":"EURUSD","type":"Forward","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On forward trades valueDate should be more than 2 days","Value date cannot be before Trade date"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-08","customer":"PLUT02","ccyPair":"EURUSD","type":"Forward","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On forward trades valueDate should be more than 2 days","Value date cannot be before Trade date"],"customer":["Customer is not in approved list"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":"2016-08-22","customer":"PLUTO3","ccyPair":"EURUSD","type":"Forward","style":null,"excerciseStartDate":null,"expiryDate":null,"premiumDate":null,"deliveryDate":null,"legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["On forward trades valueDate should be more than 2 days"],"customer":["Customer is not in approved list"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO1","ccyPair":"EURUSD","type":"VanillaOption","style":"EUROPEAN","excerciseStartDate":null,"expiryDate":"2016-08-19","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO2","ccyPair":"EURUSD","type":"VanillaOption","style":"EUROPEAN","excerciseStartDate":null,"expiryDate":"2016-08-21","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO1","ccyPair":"EURUSD","type":"VanillaOption","style":"EUROPEAN","excerciseStartDate":null,"expiryDate":"2016-08-25","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"expiryDate":["expiry date should be before delivery date"],"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO1","ccyPair":"EURUSD","type":"VanillaOption","style":"AMERICAN","excerciseStartDate":"2016-08-12","expiryDate":"2016-08-19","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO2","ccyPair":"EURUSD","type":"VanillaOption","style":"AMERICAN","excerciseStartDate":"2016-08-12","expiryDate":"2016-08-21","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO1","ccyPair":"EURUSD","type":"VanillaOption","style":"AMERICAN","excerciseStartDate":"2016-08-12","expiryDate":"2016-08-25","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"expiryDate":["expiry date should be before delivery date"],"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO1","ccyPair":"EURUSD","type":"VanillaOption","style":"AMERICAN","excerciseStartDate":"2016-08-10","expiryDate":"2016-08-19","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{* Connection #0 to host localhost left intact
-"excerciseStartDate":["excerciseStartDate should be after trade date"],"valueDate":["valueDate is missing"]},"haveErrors":true},{"trade":{"tradeDate":"2016-08-11","valueDate":null,"customer":"PLUTO3","ccyPair":"EURUSD","type":"VanillaOption","style":"AMERICAN","excerciseStartDate":"2016-08-10","expiryDate":"2016-08-19","premiumDate":"2016-08-12","deliveryDate":"2016-08-22","legalEntity":"CS Zurich"},"invalidFields":{"excerciseStartDate":["excerciseStartDate should be after trade date"],"valueDate":["valueDate is missing"],"customer":["Customer is not in approved list"]},"haveErrors":true}]
+**Request:**
+```bash
+curl -H "Content-Type: application/json" \
+     -X POST \
+     --data "@./raw_trades/single_trade.json" \
+     localhost:8080/api/validate
 ```
 
-
-**Fetch shutdown status**
-
-Request 
-`curl http://localhost:8080/api/shutdown`
-
-Response
-```
-* Hostname was NOT found in DNS cache
-*   Trying 127.0.0.1...
-* Connected to localhost (127.0.0.1) port 8080 (#0)
-> GET /api/shutdown HTTP/1.1
-> User-Agent: curl/7.35.0
-> Host: localhost:8080
-> Accept: */*
-> 
-< HTTP/1.1 200 
-< X-Application-Context: application
-< Content-Type: application/json;charset=UTF-8
-< Transfer-Encoding: chunked
-< Date: Sun, 09 Oct 2016 09:45:08 GMT
-< 
-* Connection #0 to host localhost left intact
-false⏎                                            
+**Response:**
+```json
+{
+  "trade": {
+    "tradeDate": "2016-08-11",
+    "valueDate": "2016-08-15",
+    "customer": "PLUTO1",
+    "ccyPair": "EURUSD",
+    "type": "Spot",
+    "legalEntity": "CS Zurich"
+  },
+  "invalidFields": {
+    "valueDate": ["On spot trades valueDate should be +2 days from today date"]
+  },
+  "haveErrors": true
+}
 ```
 
-**Set shutdown flag**
- 
- Request
- `curl -v -X POST http://localhost:8080/api/shutdown`
- 
- Response
+### Bulk Trade Validation
+
+**Request:**
+```bash
+curl -H "Content-Type: application/json" \
+     -X POST \
+     --data "@./raw_trades/bulk_trades.json" \
+     localhost:8080/api/validateBulk
 ```
-* Hostname was NOT found in DNS cache
-*   Trying 127.0.0.1...
-* Connected to localhost (127.0.0.1) port 8080 (#0)
-> POST /api/shutdown HTTP/1.1
-> User-Agent: curl/7.35.0
-> Host: localhost:8080
-> Accept: */*
-> 
-< HTTP/1.1 200 
-< X-Application-Context: application
-< Content-Type: application/json;charset=UTF-8
-< Transfer-Encoding: chunked
-< Date: Sun, 09 Oct 2016 09:46:29 GMT
-< 
-* Connection #0 to host localhost left intact
-true⏎ 
+
+**Response:**
+```json
+[
+  {
+    "trade": {
+      "tradeDate": "2016-08-11",
+      "valueDate": "2016-08-15",
+      "customer": "PLUTO1",
+      "ccyPair": "EURUSD",
+      "type": "Spot",
+      "legalEntity": "CS Zurich"
+    },
+    "invalidFields": {
+      "valueDate": ["On spot trades valueDate should be +2 days from today date"]
+    },
+    "haveErrors": true
+  }
+]
+```
+
+## Common Validation Rules
+
+- **Spot Trades**: Value date must be +2 business days from trade date
+- **Forward Trades**: Value date must be more than 2 days from trade date
+- **Options**: Expiry date must be before delivery date
+- **Customer Validation**: Customer must be in approved list
+- **Holiday Validation**: Value dates cannot fall on holidays
+- **Date Logic**: Value date cannot be before trade date
+
+## Build & Run
+
+### Prerequisites
+- Java 8 or higher
+- Gradle (wrapper included)
+
+### Building the Project
+```bash
+# In Git Bash (since Java is available there)
+./gradlew build
+```
+
+### Running the Application
+```bash
+./gradlew :trade-validator-app:bootRun
+```
+
+### Troubleshooting
+
+**Restlet Dependencies Issue:**
+If you encounter Restlet dependency errors, the build.gradle files have been updated to:
+- Remove problematic `spring-boot-starter-remote-shell` dependency
+- Add Restlet Maven repository: `https://maven.restlet.talend.com`
+
+**Java Not Found:**
+- Ensure Java 8+ is installed and available in PATH
+- Use Git Bash if Java is configured there
+- Set JAVA_HOME environment variable if needed
+
+### Management Endpoints Examples
+
+**Check shutdown status:**
+```bash
+curl http://localhost:8080/api/shutdown
+```
+
+**Initiate shutdown:**
+```bash
+curl -X POST http://localhost:8080/api/shutdown
 ```

@@ -2,7 +2,6 @@ package com.tradevalidator;
 
 import ch.qos.logback.classic.ViewStatusMessagesServlet;
 import com.tradevalidator.validator.CurrencyHolidayService;
-import org.jminix.console.servlet.MiniConsoleServlet;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
@@ -37,7 +36,6 @@ public class TradeValidatorAppApplication implements ServletContextInitializer {
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
 		servletContext.addServlet("ViewStatusMessages", ViewStatusMessagesServlet.class).addMapping("/logs");
-		servletContext.addServlet("JmxMiniConsoleServlet", MiniConsoleServlet.class).addMapping("/jmx/*");
 	}
 
 	@Bean

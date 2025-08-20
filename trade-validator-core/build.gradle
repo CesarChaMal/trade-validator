@@ -1,9 +1,9 @@
 dependencies {
-    compile "ch.qos.logback:logback-classic:1.1.6"
-    compile "org.springframework:spring-context:$project.springVersion"
+    implementation "ch.qos.logback:logback-classic:1.1.6"
+    implementation "org.springframework:spring-context:$project.springVersion"
 
-    compile project(":trade-validator-model")
-    compile project(":trade-validator-api")
+    implementation project(":trade-validator-model")
+    implementation project(":trade-validator-api")
 
 
 }

@@ -1,6 +1,5 @@
+apply plugin: 'java-library'
+
 dependencies {
-
-    compile project(":trade-validator-model")
-
-
+    api project(":trade-validator-model")
 }

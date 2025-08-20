@@ -1,7 +1,7 @@
 dependencies {
-    compile "org.springframework:spring-context:$project.springVersion"
-    compile "org.apache.commons:commons-lang3:3.4"
-    compile "ch.qos.logback:logback-classic:1.1.6"
-    compile project(":trade-validator-api")
+    implementation "org.springframework:spring-context:$project.springVersion"
+    implementation "org.apache.commons:commons-lang3:3.4"
+    implementation "ch.qos.logback:logback-classic:1.1.6"
+    implementation project(":trade-validator-api")
 
 }
